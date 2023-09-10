@@ -1,0 +1,3 @@
+[submodule "submodules/vpet-res"]
+	path = submodules/vpet-res
+	url = https://github.com/LorisYounger/VPet.git

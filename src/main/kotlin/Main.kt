@@ -1,6 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -171,8 +169,8 @@ fun main() = application {
                     }
                     .launchIn(this)
             }
-            Box(modifier = Modifier.size(300.dp).background(Color.Red)) {
 
+            Box(modifier = Modifier.size(300.dp)) {
                 WindowDraggableArea {
                     App()
                 }

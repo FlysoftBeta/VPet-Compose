@@ -1,4 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -6,13 +7,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
@@ -33,14 +35,15 @@ import java.io.File
 
 @Composable
 @Preview
-fun App() {
+fun WindowScope.App(windowState: WindowState) {
     AppTheme(useDarkTheme = true) {
         Pet()
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
-fun Pet() {
+fun WindowScope.Pet() {
     val audioManager: AudioManager by rememberInstance()
     val resourceManager: ResourceManager by rememberInstance()
     val frameManager: FrameManager by rememberInstance()
@@ -121,9 +124,29 @@ fun Pet() {
         }
     }
 
-    Box(modifier = Modifier.offset()) {}
+    val density = LocalDensity.current.density
+    var sizeInDp by remember { mutableStateOf(DpSize.Zero) }
+    Box(modifier = Modifier.fillMaxSize().onSizeChanged { sizeInPx ->
 
-    frameImageBitmap?.let { Image(bitmap = it, modifier = Modifier.fillMaxSize(), contentDescription = null) }
+        sizeInDp = DpSize(
+            width = (sizeInPx.width / density).dp,
+            height = (sizeInPx.height / density).dp
+        )
+    }) {
+        val headRect = resourceManager.pet?.headRect
+
+        WindowDraggableArea(
+            modifier = Modifier.size(
+                headRect?.second?.first?.let { it * sizeInDp.width.value }?.dp ?: 0.dp,
+                headRect?.second?.second?.let { it * sizeInDp.height.value }?.dp ?: 0.dp
+            ).offset(
+                headRect?.first?.first?.let { it * sizeInDp.width.value }?.dp ?: 0.dp,
+                headRect?.first?.second?.let { it * sizeInDp.height.value }?.dp ?: 0.dp
+            )
+        )
+
+        frameImageBitmap?.let { Image(bitmap = it, modifier = Modifier.fillMaxSize(), contentDescription = null) }
+    }
 }
 
 @Composable
@@ -150,7 +173,7 @@ fun Provider(content: @Composable () -> Unit = {}) {
 
 fun main() = application {
     Provider {
-        val state = rememberWindowState(size = DpSize.Unspecified)
+        val windowState = rememberWindowState(size = DpSize.Unspecified)
 
         Window(
             onCloseRequest = ::exitApplication,
@@ -159,21 +182,19 @@ fun main() = application {
             resizable = false,
             alwaysOnTop = true,
             title = "",
-            state = state
+            state = windowState
         ) {
-            LaunchedEffect(state) {
-                snapshotFlow { state.position }
+            LaunchedEffect(windowState) {
+                snapshotFlow { windowState.position }
                     .filter { it.isSpecified }
                     .onEach { windowPosition ->
-                        println(windowPosition)
+//                        println(windowPosition)
                     }
                     .launchIn(this)
             }
 
             Box(modifier = Modifier.size(300.dp)) {
-                WindowDraggableArea {
-                    App()
-                }
+                App(windowState)
             }
         }
     }

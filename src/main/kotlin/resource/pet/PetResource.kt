@@ -10,6 +10,8 @@ data class PetResource(
     val headRect: Pair<Pair<Double, Double>, Pair<Double, Double>>,
     val moveResourceList: List<MoveResource>,
     val defaultResource: CommonResource,
+    val activeDragResource: CommonResource,
+    val lazyDragResource: CommonResource,
     val climaxResource: CommonResource
 ) {
     companion object {
@@ -21,6 +23,12 @@ data class PetResource(
                     MoveResource.fromRawResource(directory.resolve("MOVE"), rawResource)
                 },
                 defaultResource = CommonResource.fromResourceDirectory(directory.resolve("Default")),
+                activeDragResource = CommonResource.fromResourceDirectory(
+                    directory.resolve("Raise").resolve("Raised_Dynamic"),
+                ),
+                lazyDragResource = CommonResource.fromResourceDirectory(
+                    directory.resolve("Raise").resolve("Raised_Static"),
+                ),
                 climaxResource = CommonResource.fromResourceDirectory(directory.resolve("Music")),
                 headRect = Pair(
                     Pair((head["px"]!!.toDouble() / 500), (head["py"]!!.toDouble() / 500)),

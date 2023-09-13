@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
@@ -26,6 +28,7 @@ import org.kodein.di.compose.rememberInstance
 import org.kodein.di.compose.withDI
 import platform.audio.AudioManager
 import platform.audio.AudioPeakUpdateEvent
+import resource.FrameList
 import resource.FrameManager
 import resource.ResourceManager
 import resource.pet.PetState
@@ -50,20 +53,24 @@ fun WindowScope.Pet() {
 
     var climaxLevel by remember { mutableStateOf(0) }
 
-    val preferredFrameList by remember { mutableStateOf(resourceManager.pet!!.defaultResource.frameList) }
-    var frameList by remember(preferredFrameList) { mutableStateOf(preferredFrameList) }
-
-    val petState by remember { mutableStateOf(PetState.HAPPY) }
-    var variant by remember(petState) { mutableStateOf("A") }
-
-    val loops by remember(frameList, petState, variant) {
+    val preferredFrameList: FrameList? by remember {
         mutableStateOf(
-            frameList[petState]?.get(
-                variant
-            )
+            resourceManager.pet!!.defaultResource.allFrameList["A"]!!
         )
     }
-    var loopIdx by remember(petState, variant) { mutableStateOf(0) }
+    val breakableFrameListArray by remember { mutableStateOf(arrayOfNulls<FrameList>(10)) }
+    val onceFrameListStack by remember { mutableStateOf(ArrayDeque<FrameList>()) }
+    val frameList = onceFrameListStack.firstOrNull() ?: breakableFrameListArray.firstOrNull { it != null }
+    ?: preferredFrameList
+
+    val petState by remember { mutableStateOf(PetState.HAPPY) }
+
+    val loops by remember(frameList, petState) {
+        mutableStateOf(
+            frameList?.get(petState)
+        )
+    }
+    var loopIdx by remember(petState) { mutableStateOf(0) }
     val loop by remember(loops, loopIdx) {
         mutableStateOf(
             loops?.getOrNull(loopIdx)
@@ -80,9 +87,11 @@ fun WindowScope.Pet() {
         var newLoopIdx = loop
         // Keep searching until we find a new loop that exists
         while (loops?.getOrNull(newLoopIdx) == null) {
-            if (newLoopIdx == loops?.size)
+            if (newLoopIdx == loops?.size) {
+                if (frameList == onceFrameListStack.firstOrNull())
+                    onceFrameListStack.removeFirst()
                 newLoopIdx = 0
-            else newLoopIdx++
+            } else newLoopIdx++
         }
         images = frameManager.loadFrames(loops!![newLoopIdx]!!)
         loopIdx = newLoopIdx
@@ -112,10 +121,9 @@ fun WindowScope.Pet() {
     LaunchedEffect(climaxLevel) {
         // We add a delay here to avoid changing frameList too often
         delay(3000)
-        if (climaxLevel > 0) {
-            frameList = resourceManager.pet!!.climaxResource.frameList
-            variant = if (climaxLevel == 1) "B" else "Single"
-        } else frameList = resourceManager.pet!!.defaultResource.frameList
+        breakableFrameListArray[1] = if (climaxLevel > 0) {
+            resourceManager.pet!!.climaxResource.allFrameList.get(if (climaxLevel == 1) "B" else "Single")
+        } else null
     }
 
     LaunchedEffect(audioManager) {
@@ -133,6 +141,8 @@ fun WindowScope.Pet() {
             height = (sizeInPx.height / density).dp
         )
     }) {
+        val draggingFrameList = resourceManager.pet!!.activeDragResource.allFrameList.get("")!!
+        val stopDraggingFrameList = resourceManager.pet!!.lazyDragResource.allFrameList.get("C")!!
         val headRect = resourceManager.pet?.headRect
 
         WindowDraggableArea(
@@ -142,7 +152,12 @@ fun WindowScope.Pet() {
             ).offset(
                 headRect?.first?.first?.let { it * sizeInDp.width.value }?.dp ?: 0.dp,
                 headRect?.first?.second?.let { it * sizeInDp.height.value }?.dp ?: 0.dp
-            )
+            ).onPointerEvent(PointerEventType.Press) {
+                breakableFrameListArray[0] = draggingFrameList
+            }.onPointerEvent(PointerEventType.Release) {
+                breakableFrameListArray[0] = null
+                onceFrameListStack.addFirst(stopDraggingFrameList)
+            }
         )
 
         frameImageBitmap?.let { Image(bitmap = it, modifier = Modifier.fillMaxSize(), contentDescription = null) }

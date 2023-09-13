@@ -1,13 +1,13 @@
 package resource.common
 
-import resource.FrameList
+import resource.AllFrameList
 import java.io.File
 
-data class CommonResource(val frameList: FrameList) {
+data class CommonResource(val allFrameList: AllFrameList) {
     companion object {
         fun fromResourceDirectory(resourceDirectory: File): CommonResource {
             return CommonResource(
-                frameList = FrameList.fromDirectory(resourceDirectory)
+                allFrameList = AllFrameList.fromDirectory(resourceDirectory)
             )
         }
     }

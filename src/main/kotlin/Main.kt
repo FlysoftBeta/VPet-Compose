@@ -1,5 +1,4 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +27,7 @@ import org.kodein.di.compose.rememberInstance
 import org.kodein.di.compose.withDI
 import platform.audio.AudioManager
 import platform.audio.AudioPeakUpdateEvent
+import resource.Frame
 import resource.FrameList
 import resource.FrameManager
 import resource.ResourceManager
@@ -44,7 +44,7 @@ fun WindowScope.App(windowState: WindowState) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WindowScope.Pet() {
     val audioManager: AudioManager by rememberInstance()
@@ -70,59 +70,61 @@ fun WindowScope.Pet() {
             frameList?.get(petState)
         )
     }
-    var loopIdx by remember(petState) { mutableStateOf(0) }
-    val loop by remember(loops, loopIdx) {
+    var loopIdx by remember(loops) { mutableStateOf(0) }
+    var loop: ArrayList<Frame>? by remember {
         mutableStateOf(
-            loops?.getOrNull(loopIdx)
+            null
         )
     }
 
-    var frameIdx by remember { mutableStateOf(0) }
-    val frame by remember(loop, frameIdx) { mutableStateOf(loop?.getOrNull(frameIdx)) }
+    var frameIdx by remember(loop) { mutableStateOf(0) }
+    var frame: Frame? by remember { mutableStateOf(null) }
 
     var images: List<ImageBitmap>? by remember { mutableStateOf(null) }
-    val frameImageBitmap by remember(images, frameIdx) { mutableStateOf(images?.getOrNull(frameIdx)) }
+    var frameImageBitmap: ImageBitmap? by remember { mutableStateOf(null) }
 
-    suspend fun updateLoop(loop: Int = 0) {
-        var newLoopIdx = loop
-        // Keep searching until we find a new loop that exists
-        while (loops?.getOrNull(newLoopIdx) == null) {
-            if (newLoopIdx == loops?.size) {
+    // Listen loopIdx changes and load corresponding frameList
+    LaunchedEffect(loopIdx, loops) {
+        frameIdx = 0
+        if (loops?.getOrNull(loopIdx) == null) {
+            if (loopIdx == loops?.size) {
+                loopIdx = 0
                 if (frameList == onceFrameListStack.firstOrNull())
                     onceFrameListStack.removeFirst()
-                newLoopIdx = 0
-            } else newLoopIdx++
-        }
-        images = frameManager.loadFrames(loops!![newLoopIdx]!!)
-        loopIdx = newLoopIdx
-        frameIdx = 0
-    }
-
-    LaunchedEffect(loop, frame, frame) {
-        if (loop != null && images == null) {
-            images = frameManager.loadFrames(loop!!)
-        }
-
-        val newFrameIdx = frameIdx + 1
-        // If we're at the end of the loop, go to a new loop
-        if (loop?.getOrNull(newFrameIdx) == null) {
-            updateLoop(loopIdx + 1)
-            frame?.let { delay(it.duration) }
+            } else loopIdx++
         } else {
-            frame?.let { delay(it.duration) }
-            frameIdx = newFrameIdx
+            val newLoop = loops?.getOrNull(loopIdx)
+            // Note that loadFrames is time-consuming,
+            // so there shouldn't be any recompositions before this
+            // in order to avoid flickering
+            newLoop?.let { images = frameManager.loadFrames(it) }
+            loop = newLoop
         }
     }
 
-    LaunchedEffect(loops) {
-        updateLoop(0)
+    // Listen frameIdx changes and load corresponding frame
+    LaunchedEffect(frameIdx, loop) {
+        if (loop?.getOrNull(frameIdx) == null) loopIdx++ else {
+            frame = loop?.getOrNull(frameIdx)
+            frameImageBitmap = images?.getOrNull(frameIdx)
+        }
+    }
+
+    // Play frames
+    LaunchedEffect(frame) {
+        if (frame == null)
+            loopIdx++
+        else {
+            frame?.let { delay(it.duration) }
+            frameIdx++
+        }
     }
 
     LaunchedEffect(climaxLevel) {
         // We add a delay here to avoid changing frameList too often
         delay(3000)
         breakableFrameListArray[1] = if (climaxLevel > 0) {
-            resourceManager.pet!!.climaxResource.allFrameList.get(if (climaxLevel == 1) "B" else "Single")
+            resourceManager.pet!!.climaxResource.allFrameList[if (climaxLevel == 1) "B" else "Single"]
         } else null
     }
 
@@ -141,6 +143,7 @@ fun WindowScope.Pet() {
             height = (sizeInPx.height / density).dp
         )
     }) {
+        var draggingState by remember { mutableStateOf(false) }
         val draggingFrameList = resourceManager.pet!!.activeDragResource.allFrameList.get("")!!
         val stopDraggingFrameList = resourceManager.pet!!.lazyDragResource.allFrameList.get("C")!!
         val headRect = resourceManager.pet?.headRect
@@ -153,10 +156,14 @@ fun WindowScope.Pet() {
                 headRect?.first?.first?.let { it * sizeInDp.width.value }?.dp ?: 0.dp,
                 headRect?.first?.second?.let { it * sizeInDp.height.value }?.dp ?: 0.dp
             ).onPointerEvent(PointerEventType.Press) {
+                draggingState = true
                 breakableFrameListArray[0] = draggingFrameList
             }.onPointerEvent(PointerEventType.Release) {
-                breakableFrameListArray[0] = null
-                onceFrameListStack.addFirst(stopDraggingFrameList)
+                if (draggingState) {
+                    draggingState = false
+                    breakableFrameListArray[0] = null
+                    onceFrameListStack.addFirst(stopDraggingFrameList)
+                }
             }
         )
 

@@ -83,15 +83,18 @@ fun WindowScope.Pet() {
     var images: List<ImageBitmap>? by remember { mutableStateOf(null) }
     var frameImageBitmap: ImageBitmap? by remember { mutableStateOf(null) }
 
+    var repeatedCount by remember(loop) { mutableStateOf(0) }
+
     // Listen loopIdx changes and load corresponding frameList
-    LaunchedEffect(loopIdx, loops) {
-        frameIdx = 0
+    LaunchedEffect(loopIdx, loops, repeatedCount) {
         if (loops?.getOrNull(loopIdx) == null) {
             if (loopIdx == loops?.size) {
                 loopIdx = 0
-                if (frameList == onceFrameListStack.firstOrNull())
-                    onceFrameListStack.removeFirst()
+                repeatedCount++
             } else loopIdx++
+        } else if (repeatedCount == 1 && onceFrameListStack.firstOrNull() == frameList) {
+            onceFrameListStack.removeFirst()
+            loopIdx = 0
         } else {
             val newLoop = loops?.getOrNull(loopIdx)
             // Note that loadFrames is time-consuming,
@@ -99,15 +102,17 @@ fun WindowScope.Pet() {
             // in order to avoid flickering
             newLoop?.let { images = frameManager.loadFrames(it) }
             loop = newLoop
+            frameIdx = 0
         }
     }
 
     // Listen frameIdx changes and load corresponding frame
-    LaunchedEffect(frameIdx, loop) {
+    DisposableEffect(frameIdx, loop) {
         if (loop?.getOrNull(frameIdx) == null) loopIdx++ else {
             frame = loop?.getOrNull(frameIdx)
             frameImageBitmap = images?.getOrNull(frameIdx)
         }
+        onDispose { }
     }
 
     // Play frames

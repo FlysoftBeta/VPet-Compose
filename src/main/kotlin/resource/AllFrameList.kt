@@ -14,7 +14,7 @@ class AllFrameList private constructor() :
         fun fromDirectory(directory: File): AllFrameList {
             val allFrameList = AllFrameList()
             val petStateNames = PetState.values()
-                .flatMap { petState -> listOfNotNull(petState.stateName, petState.alternativeStateName) }
+                .flatMap { petState -> listOfNotNull(petState.internalName, petState.alternativeInternalName) }
             val variants = listOf(
                 "A",
                 "B",

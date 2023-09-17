@@ -3,11 +3,16 @@ package resource.pet
 import resource.RawResourceList
 import resource.common.CommonResource
 import resource.move.MoveResource
+import utils.PercentageOffset
+import utils.PercentageRect
+import utils.PercentageSize
 import java.io.File
+import java.util.*
 
 data class PetResource(
     val directory: File,
-    val headRect: Pair<Pair<Double, Double>, Pair<Double, Double>>,
+    val headRect: PercentageRect,
+    val headDragPoints: EnumMap<PetState, PercentageSize>,
     val moveResourceList: List<MoveResource>,
     val defaultResource: CommonResource,
     val activeDragResource: CommonResource,
@@ -16,7 +21,20 @@ data class PetResource(
 ) {
     companion object {
         fun fromRawResourceList(directory: File, rawResourceList: RawResourceList): PetResource {
-            val head = rawResourceList["touchhead"]!![0]
+            val rawHead = rawResourceList["touchhead"]!![0]
+            val headRect = PercentageRect(
+                PercentageOffset((rawHead["px"]!!.toFloat() / 500), (rawHead["py"]!!.toFloat() / 500)),
+                PercentageSize((rawHead["sw"]!!.toFloat() / 500), (rawHead["sh"]!!.toFloat() / 500))
+            )
+
+            val rawRaisePoint = rawResourceList["raisepoint"]!![0]
+            val headDragPoints = EnumMap<PetState, PercentageSize>(PetState::class.java)
+            PetState.values().forEach { petState ->
+                val x = rawRaisePoint[petState.internalName.lowercase() + "_x"]!!.toFloat() / 500
+                val y = rawRaisePoint[petState.internalName.lowercase() + "_y"]!!.toFloat() / 500
+                headDragPoints[petState] = PercentageSize(x, y)
+            }
+
             return PetResource(
                 directory = directory,
                 moveResourceList = rawResourceList["move"]!!.map { rawResource ->
@@ -30,10 +48,8 @@ data class PetResource(
                     directory.resolve("Raise").resolve("Raised_Static"),
                 ),
                 climaxResource = CommonResource.fromResourceDirectory(directory.resolve("Music")),
-                headRect = Pair(
-                    Pair((head["px"]!!.toDouble() / 500), (head["py"]!!.toDouble() / 500)),
-                    Pair((head["sw"]!!.toDouble() / 500), (head["sh"]!!.toDouble() / 500))
-                )
+                headRect = headRect,
+                headDragPoints = headDragPoints
             )
         }
     }

@@ -1,7 +1,7 @@
 package resource.pet
 
 // Terrible :(
-enum class PetState(val stateName: String, val alternativeStateName: String? = null) {
+enum class PetState(val internalName: String, val alternativeInternalName: String? = null) {
     HAPPY("Happy"),
     NORMAL("Nomal"),
     POOR_CONDITION("PoorCondition"),
@@ -9,9 +9,9 @@ enum class PetState(val stateName: String, val alternativeStateName: String? = n
 
     companion object {
         fun fromString(stateName: String): PetState? {
-            return values().firstOrNull { it.stateName == stateName || it.alternativeStateName == stateName }
+            return values().firstOrNull { it.internalName == stateName || it.alternativeInternalName == stateName }
         }
     }
 
-    fun getValue(): String = stateName
+    fun getValue(): String = internalName
 }

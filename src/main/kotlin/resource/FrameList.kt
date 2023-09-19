@@ -1,9 +1,9 @@
 package resource
 
 import androidx.compose.runtime.Immutable
-import resource.pet.PetState
+import resource.pet.PetFeeling
 import java.util.*
 
 @Immutable
 class FrameList :
-    EnumMap<PetState, Array<ArrayList<Frame>?>>(PetState::class.java)
+    EnumMap<PetFeeling, Array<ArrayList<Frame>?>>(PetFeeling::class.java)

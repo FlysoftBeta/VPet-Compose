@@ -9,7 +9,7 @@ import kotlinx.coroutines.delay
 import platform.audio.AudioPeakUpdateEvent
 import resource.Frame
 import resource.FrameList
-import resource.pet.PetState
+import resource.pet.PetFeeling
 
 class PetFrameResource(defaultFrameList: FrameList) {
     var forced: FrameList? = null
@@ -46,10 +46,10 @@ fun WindowScope.Pet() {
             ?: frameResource.preferred
         }
 
-    val petState by remember { mutableStateOf(PetState.HAPPY) }
+    val petFeeling by remember { mutableStateOf(PetFeeling.HAPPY) }
 
-    val loops = remember(frameList, petState) {
-        frameList?.get(petState)
+    val loops = remember(frameList, petFeeling) {
+        frameList?.get(petFeeling)
     }
     var loopIdx by remember(loops) { mutableStateOf(0) }
     var loop: ArrayList<Frame>? by remember {
@@ -124,7 +124,7 @@ fun WindowScope.Pet() {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        Drag(petState, frameResource)
+        Drag(petFeeling, frameResource)
         frameImageBitmap?.let { Image(bitmap = it, modifier = Modifier.fillMaxSize(), contentDescription = null) }
     }
 }

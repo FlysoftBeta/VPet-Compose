@@ -12,7 +12,7 @@ import java.util.*
 data class PetResource(
     val directory: File,
     val headRect: PercentageRect,
-    val headDragPoints: EnumMap<PetState, PercentageSize>,
+    val headDragPoints: EnumMap<PetFeeling, PercentageSize>,
     val moveResourceList: List<MoveResource>,
     val defaultResource: CommonResource,
     val activeDragResource: CommonResource,
@@ -28,11 +28,11 @@ data class PetResource(
             )
 
             val rawRaisePoint = rawResourceList["raisepoint"]!![0]
-            val headDragPoints = EnumMap<PetState, PercentageSize>(PetState::class.java)
-            PetState.values().forEach { petState ->
-                val x = rawRaisePoint[petState.internalName.lowercase() + "_x"]!!.toFloat() / 500
-                val y = rawRaisePoint[petState.internalName.lowercase() + "_y"]!!.toFloat() / 500
-                headDragPoints[petState] = PercentageSize(x, y)
+            val headDragPoints = EnumMap<PetFeeling, PercentageSize>(PetFeeling::class.java)
+            PetFeeling.values().forEach { feeling ->
+                val x = rawRaisePoint[feeling.internalName.lowercase() + "_x"]!!.toFloat() / 500
+                val y = rawRaisePoint[feeling.internalName.lowercase() + "_y"]!!.toFloat() / 500
+                headDragPoints[feeling] = PercentageSize(x, y)
             }
 
             return PetResource(

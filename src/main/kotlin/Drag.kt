@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.size
 import androidx.compose.ui.window.WindowScope
 import kotlinx.coroutines.delay
-import resource.pet.PetState
+import resource.pet.PetFeeling
 import utils.offset
 import java.awt.MouseInfo
 import java.awt.Point
@@ -53,15 +53,15 @@ private class DragHandler(private val window: Window, private val headDragPoint:
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun WindowScope.Drag(petState: PetState, frameResource: PetFrameResource) {
+fun WindowScope.Drag(petFeeling: PetFeeling, frameResource: PetFrameResource) {
     val resourceManager = LocalManagers.current.resourceManager
     val pet = resourceManager.pet!!
 
     val density = LocalDensity.current.density
     var boxSize by remember { mutableStateOf(DpSize.Zero) }
 
-    val headDragPoint = remember(pet, petState, boxSize) {
-        (pet.headDragPoints[petState]!! * boxSize).offset
+    val headDragPoint = remember(pet, petFeeling, boxSize) {
+        (pet.headDragPoints[petFeeling]!! * boxSize).offset
     }
     val headRect = remember(pet.headRect, boxSize) { pet.headRect * boxSize }
 

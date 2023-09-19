@@ -1,6 +1,6 @@
 package resource
 
-import resource.pet.PetState
+import resource.pet.PetFeeling
 import utils.NTuple4
 import java.io.File
 import kotlin.io.path.Path
@@ -13,7 +13,7 @@ class AllFrameList private constructor() :
     companion object {
         fun fromDirectory(directory: File): AllFrameList {
             val allFrameList = AllFrameList()
-            val petStateNames = PetState.values()
+            val petFeelingNames = PetFeeling.values()
                 .flatMap { petState -> listOfNotNull(petState.internalName, petState.alternativeInternalName) }
             val variants = listOf(
                 "A",
@@ -23,7 +23,7 @@ class AllFrameList private constructor() :
             )
             val loops = 0..4
 
-            petStateNames.flatMap { name ->
+            petFeelingNames.flatMap { name ->
                 listOf(NTuple4(name, "", 1, Path(name)), *variants.flatMap { variant ->
                     listOf(
                         *listOfNotNull(
@@ -53,13 +53,13 @@ class AllFrameList private constructor() :
                 if (resDirectory.isDirectory) {
                     resDirectory.listFiles()?.filter { file -> file.extension == "png" }?.mapNotNull { file ->
                         val parts = file.nameWithoutExtension.split("_")
-                        val petState = PetState.fromString(name)!!
+                        val petFeeling = PetFeeling.fromString(name)!!
                         allFrameList.putIfAbsent(variant, FrameList())
-                        allFrameList[variant]!!.putIfAbsent(petState, Array(loops.last + 1) { null })
-                        allFrameList[variant]!![petState]!![loop] ?: let {
-                            allFrameList[variant]!![petState]!![loop] = ArrayList()
+                        allFrameList[variant]!!.putIfAbsent(petFeeling, Array(loops.last + 1) { null })
+                        allFrameList[variant]!![petFeeling]!![loop] ?: let {
+                            allFrameList[variant]!![petFeeling]!![loop] = ArrayList()
                         }
-                        allFrameList[variant]!![petState]!![loop]!!.add(
+                        allFrameList[variant]!![petFeeling]!![loop]!!.add(
                             Frame(
                                 file,
                                 (parts.getOrNull(2)?.toInt() ?: 300).toDuration(DurationUnit.MILLISECONDS)

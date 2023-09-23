@@ -11,8 +11,8 @@ VPet-Compose —— 一个 [虚拟桌宠模拟器](https://github.com/LorisYoung
 - [ ] 空闲动画
 - [x] 随音乐播放动作 (目前仅支持 Windows)
 - [x] 头部拖拽
-- [ ] 状态变化
-- [ ] 互动
+- [x] 状态变化
+- [x] 互动
 - [ ] 商店
 
 欢迎 Pull Request 帮助实现功能！

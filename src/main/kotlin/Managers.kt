@@ -5,7 +5,7 @@ import kotlinx.coroutines.runBlocking
 import platform.audio.AudioManager
 import resource.FrameManager
 import resource.ResourceManager
-import java.io.File
+import utils.resourceDirectory
 
 @Composable
 fun ManagersProvider(content: @Composable () -> Unit = {}) {
@@ -18,11 +18,7 @@ fun ManagersProvider(content: @Composable () -> Unit = {}) {
 
         runBlocking {
             resourceManager.loadFromDirectories(
-                listOf(
-                    File(System.getProperty("compose.application.resources.dir")).resolve(
-                        "default_mod"
-                    )
-                )
+                listOf(resourceDirectory.resolve("default_mod"))
             )
         }
 

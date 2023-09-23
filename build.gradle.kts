@@ -20,9 +20,13 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
-    implementation("org.jetbrains.compose.material3:material3:${project.properties["compose.version"]}")
+    implementation(compose.material3)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.kodein.di:kodein-di-framework-compose:7.20.2")
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 compose.desktop {
@@ -31,16 +35,11 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
+
             packageName = "VPet Compose"
             packageVersion = "1.0.0"
+
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
         }
     }
-//    nativeApplication {
-//        distributions {
-//            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
-//            packageName = "VPet Compose"
-//            packageVersion = "1.0.0"
-//        }
-//    }
 }

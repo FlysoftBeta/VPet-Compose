@@ -92,17 +92,20 @@ fun WindowScope.Drag(petFeeling: PetFeeling, frameResource: PetFrameResource) {
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .onSizeChanged { boxSize = DpSize((it.width / density).dp, (it.height / density).dp) }
     ) {
         Box(
-            modifier = Modifier.size(headRect.size).offset(
-                headRect.left, headRect.top
-            ).onPointerEvent(PointerEventType.Press) {
-                pressState = true
-            }.onPointerEvent(PointerEventType.Release) {
-                pressState = false
-            }
+            modifier = Modifier
+                .size(headRect.size)
+                .offset(headRect.left, headRect.top)
+                .onPointerEvent(PointerEventType.Press) {
+                    pressState = true
+                }
+                .onPointerEvent(PointerEventType.Release) {
+                    pressState = false
+                }
         )
     }
 }

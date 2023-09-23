@@ -6,16 +6,18 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.launch
 import utils.EventBus
-import java.io.File
+import utils.resourceDirectory
 
 @OptIn(DelicateCoroutinesApi::class)
 class AudioManager : EventBus() {
     private val job: Job
 
     init {
-        // Note that this is only implemented for Windows, I have no idea how to implement it for other platforms
+        val helperExecutable = resourceDirectory.resolve(resourceDirectory.resolve("audio-helper").readText())
+
+        // Note that this is only implemented for Windows/Linux with PipeWire, I have no idea how to implement it for other platforms
         val process = Runtime.getRuntime()
-            .exec(File(System.getProperty("compose.application.resources.dir")).resolve("GetAudioPeak.exe").absolutePath)
+            .exec(helperExecutable.absolutePath)
         job = GlobalScope.launch {
             process.inputStream.bufferedReader().lineSequence().asFlow().collect { output ->
                 output.trim().toDoubleOrNull()

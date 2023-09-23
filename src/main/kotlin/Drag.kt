@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.size
 import androidx.compose.ui.window.WindowScope
 import kotlinx.coroutines.delay
-import resource.pet.PetFeeling
+import state.FeelingType
 import utils.offset
 import java.awt.MouseInfo
 import java.awt.Point
@@ -53,40 +53,43 @@ private class DragHandler(private val window: Window, private val headDragPoint:
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun WindowScope.Drag(petFeeling: PetFeeling, frameResource: PetFrameResource) {
+fun WindowScope.Drag(feelingType: FeelingType, frameResource: PetFrameResource) {
     val resourceManager = LocalManagers.current.resourceManager
-    val pet = resourceManager.pet!!
+    val pet = resourceManager.pet
 
     val density = LocalDensity.current.density
     var boxSize by remember { mutableStateOf(DpSize.Zero) }
 
-    val headDragPoint = remember(pet, petFeeling, boxSize) {
-        (pet.headDragPoints[petFeeling]!! * boxSize).offset
+    val headDragPoint = remember(pet, feelingType, boxSize) {
+        (pet.headDragPoints?.get(feelingType)?.times(boxSize))?.offset
     }
-    val headRect = remember(pet.headRect, boxSize) { pet.headRect * boxSize }
+    val headRect = remember(pet.headRect, boxSize) { pet.headRect?.times(boxSize) }
 
     var pressState by remember { mutableStateOf(false) }
     var dragState by remember { mutableStateOf(false) }
     val dragHandler = remember(headDragPoint) {
-        val headDragPointInInt =
-            IntOffset((headDragPoint.x.value).toInt(), (headDragPoint.y.value).toInt())
-        DragHandler(window, headDragPointInInt)
+        headDragPoint?.let { headDragPoint ->
+            val headDragPointInInt = IntOffset(headDragPoint.x.value.toInt(), (headDragPoint.y.value).toInt())
+            DragHandler(window, headDragPointInInt)
+        }
     }
-    val dragFrameList = remember { pet.activeDragResource.allFrameList[""]!! }
-    val dragStopFrameList = remember { pet.lazyDragResource.allFrameList["C"]!! }
+    val dragFrameList = remember { pet.activeDragResource?.allFrameList?.get("") }
+    val dragStopFrameList = remember { pet.lazyDragResource?.allFrameList?.get("C") }
 
-    LaunchedEffect(pressState) {
-        if (pressState) {
-            delay(1000)
-            dragState = true
-            frameResource.forced = dragFrameList
-            delay(100)
-            dragHandler.register()
-        } else {
-            if (dragState) {
-                dragState = false
-                frameResource.forced = null
-                frameResource.playOnce = dragStopFrameList
+    dragHandler?.let { drag ->
+        LaunchedEffect(pressState) {
+            if (pressState) {
+                delay(1000)
+                dragState = true
+                frameResource.forced = dragFrameList
+                delay(100)
+                drag.register()
+            } else {
+                if (dragState) {
+                    dragState = false
+                    frameResource.forced = null
+                    dragStopFrameList?.let { frameResource.playOnce.add(it) }
+                }
             }
         }
     }
@@ -96,16 +99,18 @@ fun WindowScope.Drag(petFeeling: PetFeeling, frameResource: PetFrameResource) {
             .fillMaxSize()
             .onSizeChanged { boxSize = DpSize((it.width / density).dp, (it.height / density).dp) }
     ) {
-        Box(
-            modifier = Modifier
-                .size(headRect.size)
-                .offset(headRect.left, headRect.top)
-                .onPointerEvent(PointerEventType.Press) {
-                    pressState = true
-                }
-                .onPointerEvent(PointerEventType.Release) {
-                    pressState = false
-                }
-        )
+        headRect?.let { headRect ->
+            Box(
+                modifier = Modifier
+                    .size(headRect.size)
+                    .offset(headRect.left, headRect.top)
+                    .onPointerEvent(PointerEventType.Press) {
+                        pressState = true
+                    }
+                    .onPointerEvent(PointerEventType.Release) {
+                        pressState = false
+                    }
+            )
+        }
     }
 }

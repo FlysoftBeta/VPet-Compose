@@ -9,47 +9,42 @@ import kotlinx.coroutines.delay
 import platform.audio.AudioPeakUpdateEvent
 import resource.Frame
 import resource.FrameList
-import resource.pet.PetFeeling
+import state.FeelingType
 
-class PetFrameResource(defaultFrameList: FrameList) {
-    var forced: FrameList? = null
-    var playOnce: FrameList? = null
-    var breakable: FrameList? = null
-    var preferred: FrameList? = defaultFrameList
+class PetFrameResource(defaultFrameList: FrameList?) {
+    var forced by mutableStateOf<FrameList?>(null)
+    var playOnce = mutableStateListOf<FrameList>()
+    var breakable by mutableStateOf<FrameList?>(null)
+    var preferred by mutableStateOf<FrameList?>(null)
+    var idle by mutableStateOf<FrameList?>(defaultFrameList)
 }
 
 @Composable
 fun WindowScope.Pet() {
-    val frameManager = LocalManagers.current.frameManager
     val resourceManager = LocalManagers.current.resourceManager
-    val pet = resourceManager.pet!!
+    val pet = resourceManager.pet
+
+    val state = LocalPetState.current
+    val feelingType = state.feelingType
 
     val audioManager = LocalManagers.current.audioManager
     var climaxLevel by remember { mutableStateOf(0) }
     val climaxResource =
         remember {
             mapOf(
-                1 to pet.climaxResource.allFrameList["B"]!!,
-                2 to pet.climaxResource.allFrameList["Single"]!!
+                1 to pet.climaxResource?.allFrameList?.get("B"),
+                2 to pet.climaxResource?.allFrameList?.get("Single")
             )
         }
 
-    val frameResource by remember { mutableStateOf(PetFrameResource(pet.defaultResource.allFrameList["A"]!!)) }
+    val frameManager = LocalManagers.current.frameManager
+    val frameResource = remember { PetFrameResource(pet.defaultResource?.allFrameList?.get("A")) }
     val frameList =
-        remember(
-            frameResource.forced,
-            frameResource.playOnce,
-            frameResource.breakable,
-            frameResource.preferred
-        ) {
-            frameResource.forced ?: frameResource.playOnce ?: frameResource.breakable
-            ?: frameResource.preferred
-        }
+        frameResource.forced ?: frameResource.playOnce.firstOrNull()
+        ?: frameResource.preferred ?: frameResource.breakable ?: frameResource.idle
 
-    val petFeeling by remember { mutableStateOf(PetFeeling.HAPPY) }
-
-    val loops = remember(frameList, petFeeling) {
-        frameList?.get(petFeeling)
+    val loops = remember(frameList, feelingType) {
+        frameList?.get(feelingType) ?: frameList?.get(FeelingType.NORMAL)
     }
     var loopIdx by remember(loops) { mutableStateOf(0) }
     var loop: ArrayList<Frame>? by remember {
@@ -64,7 +59,25 @@ fun WindowScope.Pet() {
     var images: List<ImageBitmap>? by remember { mutableStateOf(null) }
     var frameImageBitmap: ImageBitmap? by remember { mutableStateOf(null) }
 
-    var repeatedCount by remember(loop) { mutableStateOf(0) }
+    var repeatedCount by remember(loops) { mutableStateOf(0) }
+
+    DisposableEffect(state.action) {
+        state.action?.let { action ->
+            val actionResource = pet.actions.firstOrNull { actionResource -> actionResource.action == action }
+            actionResource?.allFrameList?.get("A")?.let { enterFrameList ->
+                frameResource.playOnce.add(enterFrameList)
+            }
+            actionResource?.allFrameList?.get("B")?.let { doingFrameList ->
+                frameResource.preferred = doingFrameList
+            }
+            onDispose {
+                frameResource.preferred = null
+                actionResource?.allFrameList?.get("C")?.let { exitFrameList ->
+                    frameResource.playOnce.add(exitFrameList)
+                }
+            }
+        } ?: onDispose {}
+    }
 
     // Listen loopIdx changes and load corresponding frameList
     LaunchedEffect(loopIdx, loops, repeatedCount) {
@@ -73,8 +86,8 @@ fun WindowScope.Pet() {
                 loopIdx = 0
                 repeatedCount++
             } else loopIdx++
-        } else if (repeatedCount >= 1 && frameList == frameResource.playOnce) {
-            frameResource.playOnce = null
+        } else if (repeatedCount >= 1 && frameList == frameResource.playOnce.firstOrNull()) {
+            frameResource.playOnce.removeFirst()
             loopIdx = 0
         } else {
             val newLoop = loops.getOrNull(loopIdx)
@@ -88,19 +101,10 @@ fun WindowScope.Pet() {
     }
 
     // Listen frameIdx changes and load corresponding frame
-    DisposableEffect(frameIdx, loop) {
+    LaunchedEffect(frameIdx, loop) {
         if (loop?.getOrNull(frameIdx) == null) loopIdx++ else {
             frame = loop?.getOrNull(frameIdx)
             frameImageBitmap = images?.getOrNull(frameIdx)
-        }
-        onDispose { }
-    }
-
-    // Play frames
-    LaunchedEffect(frame) {
-        if (frame == null)
-            loopIdx++
-        else {
             frame?.let { delay(it.duration) }
             frameIdx++
         }
@@ -109,7 +113,6 @@ fun WindowScope.Pet() {
     LaunchedEffect(climaxLevel) {
         // We add a delay here to avoid changing frameList too often
         delay(3000)
-
 
         if (climaxLevel != 0) frameResource.breakable = climaxResource[climaxLevel]
         else if (climaxResource.containsValue(frameResource.breakable)) frameResource.breakable = null
@@ -124,7 +127,7 @@ fun WindowScope.Pet() {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        Drag(petFeeling, frameResource)
+        Drag(feelingType, frameResource)
         frameImageBitmap?.let { Image(bitmap = it, modifier = Modifier.fillMaxSize(), contentDescription = null) }
     }
 }

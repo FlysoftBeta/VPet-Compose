@@ -1,14 +1,10 @@
 package resource.common
 
+import androidx.compose.runtime.Immutable
 import resource.AllFrameList
 import java.io.File
 
-data class CommonResource(val allFrameList: AllFrameList) {
-    companion object {
-        fun fromResourceDirectory(resourceDirectory: File): CommonResource {
-            return CommonResource(
-                allFrameList = AllFrameList.fromDirectory(resourceDirectory)
-            )
-        }
-    }
+@Immutable
+open class CommonResource(resourceDirectory: File) {
+    val allFrameList: AllFrameList = AllFrameList.fromDirectory(resourceDirectory)
 }

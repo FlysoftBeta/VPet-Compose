@@ -11,6 +11,7 @@ import utils.resourceDirectory
 @OptIn(DelicateCoroutinesApi::class)
 class AudioManager : EventBus() {
     private var job: Job? = null
+    private var shutdownHook: Thread? = null
 
     init {
         try {
@@ -20,6 +21,12 @@ class AudioManager : EventBus() {
             // Note that this is only implemented for Windows/Linux with PipeWire, I have no idea how to implement it for other platforms
             val process = Runtime.getRuntime()
                 .exec(helperExecutable.absolutePath)
+
+            shutdownHook = Thread {
+                process.destroy()
+            }
+            Runtime.getRuntime().addShutdownHook(shutdownHook)
+
             job = GlobalScope.launch {
                 process.inputStream.bufferedReader().lineSequence().asFlow().collect { output ->
                     output.trim().toDoubleOrNull()
@@ -33,5 +40,6 @@ class AudioManager : EventBus() {
 
     protected fun finalize() {
         job?.cancel()
+        shutdownHook?.let { hook -> Runtime.getRuntime().removeShutdownHook(hook) }
     }
 }

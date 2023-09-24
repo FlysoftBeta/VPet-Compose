@@ -10,4 +10,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "vpet-compose"
+rootProject.name = "cyberpet"

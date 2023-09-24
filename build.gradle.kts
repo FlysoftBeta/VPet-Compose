@@ -5,8 +5,8 @@ plugins {
     id("org.jetbrains.compose")
 }
 
-group = "com.flysoft.vpet_compose"
-version = "1.0-SNAPSHOT"
+group = "com.flysoft.cyberpet"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -36,8 +36,16 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
 
-            packageName = "VPet Compose"
+            windows {
+
+                shortcut = true
+                perUserInstall = true
+                menu = true
+            }
+
+            packageName = "CyberPet"
             packageVersion = "1.0.0"
+            vendor = "Flysoft"
 
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
         }

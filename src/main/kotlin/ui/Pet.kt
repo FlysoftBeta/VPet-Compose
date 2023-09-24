@@ -1,3 +1,5 @@
+package ui
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,8 +9,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.window.WindowScope
 import kotlinx.coroutines.delay
 import platform.audio.AudioPeakUpdateEvent
-import resource.Frame
-import resource.FrameList
+import resource.frame.Frame
+import resource.frame.FrameList
 import state.FeelingType
 
 class PetFrameResource(defaultFrameList: FrameList?) {
@@ -110,11 +112,11 @@ fun WindowScope.Pet() {
         }
     }
 
-    LaunchedEffect(climaxLevel) {
+    LaunchedEffect(climaxLevel, feelingType) {
         // We add a delay here to avoid changing frameList too often
         delay(3000)
 
-        if (climaxLevel != 0) frameResource.breakable = climaxResource[climaxLevel]
+        if (feelingType != FeelingType.ILL && climaxLevel != 0) frameResource.breakable = climaxResource[climaxLevel]
         else if (climaxResource.containsValue(frameResource.breakable)) frameResource.breakable = null
     }
 

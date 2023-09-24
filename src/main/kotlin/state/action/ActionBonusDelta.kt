@@ -1,9 +1,9 @@
 package state.action
 
 data class ActionBonusDelta(
-    val earnedMoney: Float,
-    val earnedExp: Float,
-    val spentHunger: Float,
-    val spentThirst: Float,
-    val spentFeeling: Float
+    val earnedMoney: Double,
+    val earnedExp: Double,
+    val spentHunger: Double,
+    val spentThirst: Double,
+    val spentFeeling: Double
 )

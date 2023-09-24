@@ -1,6 +1,7 @@
 package resource
 
-import resource.pet.PetResource
+import resource.model.PetResource
+import resource.raw.RawResourceList
 import java.io.File
 
 class ResourceManager {

@@ -1,4 +1,4 @@
-package resource
+package resource.frame
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap

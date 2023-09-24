@@ -1,7 +1,7 @@
-package resource.common
+package resource.model
 
 import androidx.compose.runtime.Immutable
-import resource.AllFrameList
+import resource.frame.AllFrameList
 import java.io.File
 
 @Immutable

@@ -1,4 +1,4 @@
-package resource
+package resource.frame
 
 import java.io.File
 import kotlin.time.Duration

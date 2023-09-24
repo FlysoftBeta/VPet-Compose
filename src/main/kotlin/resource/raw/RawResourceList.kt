@@ -1,4 +1,4 @@
-package resource
+package resource.raw
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

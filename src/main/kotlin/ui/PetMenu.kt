@@ -1,3 +1,5 @@
+package ui
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.contextMenuOpenDetector
 import androidx.compose.foundation.layout.Box
@@ -13,11 +15,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.window.ApplicationScope
 import state.action.ActionType
 
-data class MenuItem(
+private data class MenuItem(
     val text: String,
     val icon: ImageVector? = null,
     val expandable: Boolean,
-    val onClick: () -> List<MenuItem>?
+    val onClick: () -> List<MenuItem>?,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -27,6 +29,7 @@ fun ApplicationScope.PetMenu(content: @Composable () -> Unit) {
     val pet = resourceManager.pet
     val state = LocalPetState.current
 
+    var stateCardExpanded by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     val menuStack = remember { mutableStateListOf<List<MenuItem>>() }
 
@@ -56,7 +59,10 @@ fun ApplicationScope.PetMenu(content: @Composable () -> Unit) {
     val mainMenu = remember {
         listOf(
             // TODO: Implement state dashboard
-            MenuItem("状态", Icons.Filled.Dashboard, false) { null },
+            MenuItem("状态", Icons.Filled.Dashboard, true) {
+                stateCardExpanded = true
+                null
+            },
             // TODO: Implement store
             MenuItem("投喂", Icons.Filled.Fastfood, false) { null },
             MenuItem("互动", Icons.Filled.Workspaces, true) { actionMenu },
@@ -68,7 +74,7 @@ fun ApplicationScope.PetMenu(content: @Composable () -> Unit) {
         if (expanded) menuStack.clear()
     }
 
-    DropdownMenu(expanded, onDismissRequest = { expanded = false }, content = {
+    DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
         val menu = (menuStack.lastOrNull()?.let { menu -> Pair(true, menu) } ?: Pair(false, mainMenu))
 
         // Go to parent menu
@@ -99,9 +105,15 @@ fun ApplicationScope.PetMenu(content: @Composable () -> Unit) {
                 expanded = item.expandable
             })
         }
-    })
+    }
+
+
 
     Box(modifier = Modifier.contextMenuOpenDetector { expanded = !expanded }) {
         content()
     }
+
+    StatusCard(expanded = stateCardExpanded, onDismissRequest = {
+        stateCardExpanded = false
+    })
 }

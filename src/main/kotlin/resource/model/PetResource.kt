@@ -1,13 +1,10 @@
-package resource.pet
+package resource.model
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import resource.ActionResource
-import resource.RawResourceList
-import resource.common.CommonResource
-import resource.move.MoveResource
+import resource.raw.RawResourceList
 import state.FeelingType
 import state.action.Action
 import utils.PercentageOffset
@@ -66,8 +63,18 @@ class PetResource {
         }
 
         rawResourceList["move"]?.let { rawMove ->
-            moveResourceList = rawMove.map { rawResource ->
-                MoveResource.fromRawResource(directory.resolve("MOVE"), rawResource)
+            moveResourceList = rawMove.map { rawPoint ->
+                val id = rawPoint["graph"]!!
+                val resourceDirectory = directory.resolve("MOVE").resolve(id)
+                MoveResource(
+                    directory = resourceDirectory,
+                    trigger = MoveTrigger(
+                        rawPoint["TriggerLeft"]?.toInt(),
+                        rawPoint["TriggerTop"]?.toInt(),
+                        rawPoint["TriggerRight"]?.toInt(),
+                        rawPoint["TriggerBottom"]?.toInt()
+                    )
+                )
             }
         }
 

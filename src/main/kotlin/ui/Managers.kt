@@ -1,11 +1,11 @@
+package ui
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
-import kotlinx.coroutines.runBlocking
 import platform.audio.AudioManager
-import resource.FrameManager
 import resource.ResourceManager
-import utils.resourceDirectory
+import resource.frame.FrameManager
 
 @Composable
 fun ManagersProvider(content: @Composable () -> Unit = {}) {
@@ -14,14 +14,6 @@ fun ManagersProvider(content: @Composable () -> Unit = {}) {
         override val resourceManager: ResourceManager = ResourceManager()
         override val frameManager: FrameManager = FrameManager()
     })) {
-        val resourceManager = LocalManagers.current.resourceManager
-
-        runBlocking {
-            resourceManager.loadFromDirectories(
-                listOf(resourceDirectory.resolve("default_mod"))
-            )
-        }
-
         content()
     }
 }

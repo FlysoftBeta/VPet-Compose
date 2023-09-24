@@ -1,4 +1,4 @@
-package resource
+package resource.frame
 
 import androidx.compose.runtime.Immutable
 import state.FeelingType

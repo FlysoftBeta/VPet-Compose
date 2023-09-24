@@ -1,6 +1,6 @@
 package state.action
 
-import resource.RawResource
+import resource.raw.RawResource
 
 data class Action(val name: String, val type: ActionType, val bonus: ActionBonus) {
     companion object {

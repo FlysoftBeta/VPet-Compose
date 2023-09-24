@@ -1,3 +1,5 @@
+package ui
+
 import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import state.State

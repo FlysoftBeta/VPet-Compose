@@ -1,7 +1,6 @@
-package resource
+package resource.model
 
 import androidx.compose.runtime.Immutable
-import resource.common.CommonResource
 import state.action.Action
 import java.io.File
 

@@ -9,9 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.awaitApplication
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.rememberDialogState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import ui.theme.AppTheme
@@ -33,15 +33,15 @@ fun app() = runBlocking {
                 loading = null
             }
 
-            Window(
+            Dialog(
                 onCloseRequest = ::exitApplication,
                 transparent = true,
                 undecorated = true,
                 resizable = false,
-                alwaysOnTop = true,
                 title = "",
-                state = rememberWindowState(size = DpSize(300.dp, 300.dp))
+                state = rememberDialogState(size = DpSize(300.dp, 300.dp))
             ) {
+                window.isAlwaysOnTop = true
                 AppTheme(useDarkTheme = true) {
                     loading?.let { loading ->
                         Surface {

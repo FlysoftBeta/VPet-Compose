@@ -12,7 +12,6 @@ class State {
     val expRequiredToUpgrade get() = (level * 10.0).pow(2)
     var exp by mutableStateOf(0.0)
     val level get() = if (exp < 0) 1 else ((sqrt(exp) / 10) + 1).toInt()
-
     var money by mutableStateOf(0.0)
 
     private var _hunger by mutableStateOf(100.0)
@@ -52,6 +51,7 @@ class State {
 
     val feelingType: FeelingType
         get() {
+            // https://github.com/LorisYounger/VPet/blob/b162309c58313dea515c25dc5138256740df5783/VPet-Simulator.Core/Handle/GameSave.cs#L283
             val healthLimit =
                 60 - (if (feeling >= 80) 12 else 0) - if (favorability >= 80) 12 else if (favorability >= 40) 6 else 0
             return if (health <= healthLimit / 2) FeelingType.ILL
@@ -64,27 +64,55 @@ class State {
             }
         }
 
+    var sleeping by mutableStateOf(false)
+        private set
     var action: Action? by mutableStateOf(null)
+        private set
 
     private var tick by mutableStateOf(0)
+    private var lastInteractionTick by mutableStateOf(0)
+
+    // https://github.com/LorisYounger/VPet/blob/b162309c58313dea515c25dc5138256740df5783/VPet-Simulator.Core/Display/MainLogic.cs#L123
+    private val aloneTicks = tick - lastInteractionTick
+    val aloneValue = if (aloneTicks < 4) 0.25 else sqrt(aloneTicks.toDouble()) / 2
+
 
     fun tick() {
         tick++
-        if (feelingType == FeelingType.ILL) action = null
-        action?.let { action ->
-            val delta = action.bonus.getBonusDelta(this)
-            exp += delta.earnedExp
-            money += delta.earnedMoney
-            hunger -= delta.spentHunger
-            thirst -= delta.spentThirst
-            feeling -= delta.spentFeeling
+
+        if (!sleeping) {
+            if (feelingType == FeelingType.ILL) action = null
+            action?.let { action ->
+                val delta = action.bonus.getBonusDelta(this)
+                exp += delta.earnedExp
+                money += delta.earnedMoney
+                hunger -= delta.spentHunger
+                thirst -= delta.spentThirst
+                feeling -= delta.spentFeeling
+            }
+
+            health += (-2.0 +
+                    (if (hunger <= 25) -2.0 else if (hunger >= 75) Random.nextDouble(1.0, 3.0) else 0.0) +
+                    (if (thirst <= 25) -2.0 else if (thirst >= 75) Random.nextDouble(1.0, 4.0) else 0.0))
+            favorability += if (feeling >= 90) 1.0 else if (feeling <= 25) -1.0 else 0.0
+            exp += (if (feeling >= 75) 2.0 else if (feeling <= 25) -1.0 else 0.0) +
+                    (if (thirst >= 75) Random.nextDouble(1.0, 3.0) else 0.0)
+            feeling += -aloneValue
+            println("Exp:$exp Level:$level Money:$money Hunger:$hunger Thirst:$thirst Feeling:$feeling Type:${feelingType.name} Health:$health Favorability:$favorability")
         }
-        health += (-2.0 +
-                (if (hunger <= 25) -2.0 else if (hunger >= 75) Random.nextDouble(1.0, 3.0) else 0.0) +
-                (if (thirst <= 25) -2.0 else if (thirst >= 75) Random.nextDouble(1.0, 4.0) else 0.0))
-        favorability += if (feeling >= 90) 1.0 else if (feeling <= 25) -1.0 else 0.0
-        exp += (if (feeling >= 75) 2.0 else if (feeling <= 25) -1.0 else 0.0) +
-                (if (thirst >= 75) Random.nextDouble(1.0, 3.0) else 0.0)
-        println("Exp:$exp Level:$level Money:$money Hunger:$hunger Thirst:$thirst Feeling:$feeling Type:${feelingType.name} Health:$health Favorability:$favorability")
+    }
+
+    fun interaction() {
+        lastInteractionTick = tick
+    }
+
+    fun startAction(newAction: Action) {
+        action = newAction
+        sleeping = false
+    }
+
+    fun sleep() {
+        action = null
+        sleeping = true
     }
 }

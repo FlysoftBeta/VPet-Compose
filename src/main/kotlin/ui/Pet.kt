@@ -4,8 +4,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.window.WindowScope
 import kotlinx.coroutines.delay
 import platform.audio.AudioPeakUpdateEvent
@@ -21,6 +24,7 @@ class PetFrameResource(defaultFrameList: FrameList?) {
     var idle by mutableStateOf<FrameList?>(defaultFrameList)
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WindowScope.Pet() {
     val resourceManager = LocalManagers.current.resourceManager
@@ -32,7 +36,7 @@ fun WindowScope.Pet() {
     val audioManager = LocalManagers.current.audioManager
     var climaxLevel by remember { mutableStateOf(0) }
     val climaxResource =
-        remember {
+        remember(pet.climaxResource) {
             mapOf(
                 1 to pet.climaxResource?.allFrameList?.get("B"),
                 2 to pet.climaxResource?.allFrameList?.get("Single")
@@ -81,6 +85,23 @@ fun WindowScope.Pet() {
         } ?: onDispose {}
     }
 
+    DisposableEffect(state.sleeping) {
+        if (state.sleeping) {
+            pet.sleepResource?.allFrameList?.get("A")?.let { enterFrameList ->
+                frameResource.playOnce.add(enterFrameList)
+            }
+            pet.sleepResource?.allFrameList?.get("B")?.let { doingFrameList ->
+                frameResource.preferred = doingFrameList
+            }
+            onDispose {
+                frameResource.preferred = null
+                pet.sleepResource?.allFrameList?.get("C")?.let { exitFrameList ->
+                    frameResource.playOnce.add(exitFrameList)
+                }
+            }
+        } else onDispose { }
+    }
+
     // Listen loopIdx changes and load corresponding frameList
     LaunchedEffect(loopIdx, loops, repeatedCount) {
         if (loops?.getOrNull(loopIdx) == null) {
@@ -127,7 +148,9 @@ fun WindowScope.Pet() {
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().onPointerEvent(PointerEventType.Press) {
+            state.interaction()
+        }
     ) {
         Drag(feelingType, frameResource)
         frameImageBitmap?.let { Image(bitmap = it, modifier = Modifier.fillMaxSize(), contentDescription = null) }

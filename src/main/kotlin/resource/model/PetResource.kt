@@ -25,6 +25,7 @@ class PetResource {
     var activeDragResource by mutableStateOf<CommonResource?>(null)
     var lazyDragResource by mutableStateOf<CommonResource?>(null)
     var climaxResource by mutableStateOf<CommonResource?>(null)
+    var sleepResource by mutableStateOf<CommonResource?>(null)
 
     fun applyRawResourceList(baseDirectory: File, rawResourceList: RawResourceList) {
         val rawPet = rawResourceList["pet"]!![0]
@@ -93,5 +94,9 @@ class PetResource {
         val climaxDirectory = directory.resolve("Music")
         if (climaxDirectory.isDirectory)
             climaxResource = CommonResource(climaxDirectory)
+
+        val sleepDirectory = directory.resolve("Sleep")
+        if (sleepDirectory.isDirectory)
+            sleepResource = CommonResource(sleepDirectory)
     }
 }

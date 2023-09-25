@@ -36,7 +36,7 @@ fun ApplicationScope.PetMenu(content: @Composable () -> Unit) {
     fun listActionsOfType(type: ActionType): List<MenuItem> {
         return pet.actions.filter { actionResource -> actionResource.action.type == type }.map { actionResource ->
             MenuItem(actionResource.action.name, null, false) {
-                state.action = actionResource.action
+                state.startAction(actionResource.action)
                 null
             }
         }
@@ -45,7 +45,10 @@ fun ApplicationScope.PetMenu(content: @Composable () -> Unit) {
     val actionMenu = remember {
         listOf(
             // TODO: Implement sleeping
-            MenuItem("睡觉", Icons.Filled.Bedtime, false) { null },
+            MenuItem("睡觉", Icons.Filled.Bedtime, false) {
+                state.sleep()
+                null
+            },
             MenuItem("学习", Icons.Filled.Book, true) { listActionsOfType(ActionType.STUDY) },
             MenuItem("玩耍", Icons.Filled.Casino, true) { listActionsOfType(ActionType.PLAY) },
             MenuItem("工作", Icons.Filled.Work, true) { listActionsOfType(ActionType.WORK) })

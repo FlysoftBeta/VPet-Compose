@@ -1,6 +1,7 @@
 package state.action
 
 import resource.raw.RawResource
+import state.FeelingType
 import state.State
 import kotlin.math.max
 
@@ -16,14 +17,16 @@ data class TraditionalActionBonus(
     private val isEarningExp = type == ActionType.STUDY
 
     override fun getBonusDelta(status: State): ActionBonusDelta {
-        val efficiency = (if (status.hunger <= 25) 0.25 else 0.5) + (if (status.thirst <= 25) 0.25 else 0.5)
+        val efficiency = (if (status.hunger <= 25) 0.25 else 0.5) +
+                (if (status.thirst <= 25) 0.25 else 0.5) +
+                (if (status.feelingType == FeelingType.POOR_CONDITION && (status.strength >= status.hunger || status.strength >= status.thirst)) 0.1 else 0.0)
         val earning = max(earnBase * efficiency + status.level * earnPerLevel * (efficiency - 0.5) * 2.0, 0.0)
         return ActionBonusDelta(
-            earnedMoney = if (isEarningExp) 0.0 else earning,
-            earnedExp = if (isEarningExp) earning else 0.0,
-            spentHunger = spentHunger,
-            spentThirst = spentThirst,
-            spentFeeling = (if (type == ActionType.PLAY) -status.aloneValue else 1.0) * spentFeeling
+            money = if (isEarningExp) 0.0 else earning,
+            exp = if (isEarningExp) earning else 0.0,
+            hunger = -spentHunger,
+            thirst = -spentThirst,
+            feeling = (if (type == ActionType.PLAY) status.aloneValue else -1.0) * spentFeeling
         )
     }
 

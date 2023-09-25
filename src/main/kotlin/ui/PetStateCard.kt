@@ -44,7 +44,7 @@ val Red = Color(0xffff4c4c)
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun StatusCard(expanded: Boolean, onDismissRequest: () -> Unit) {
+fun PetStatusCard(expanded: Boolean, onDismissRequest: () -> Unit) {
     val state = LocalPetState.current
     val list =
         remember(state.exp, state.expRequiredToUpgrade, state.health, state.feeling, state.hunger, state.thirst) {
@@ -59,10 +59,11 @@ fun StatusCard(expanded: Boolean, onDismissRequest: () -> Unit) {
                         shouldBeColored = false
                     )
                 ),
-                StateItem("体力", progress = StateItemProgress(state.health, 100.0)),
                 StateItem("心情", progress = StateItemProgress(state.feeling, 100.0)),
+                StateItem("体力", progress = StateItemProgress(state.strength, 100.0)),
                 StateItem("饱食度", progress = StateItemProgress(state.hunger, 100.0)),
                 StateItem("口渴度", progress = StateItemProgress(state.thirst, 100.0)),
+                StateItem("健康度", progress = StateItemProgress(state.health, 100.0)),
             )
         }
 

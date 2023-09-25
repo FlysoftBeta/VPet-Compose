@@ -42,6 +42,13 @@ class State {
             _health = value.coerceAtLeast(0.0).coerceAtMost(100.0)
         }
 
+    private var _strength by mutableStateOf(100.0)
+    var strength
+        get() = _strength
+        set(value) {
+            _strength = value.coerceAtLeast(0.0).coerceAtMost(100.0)
+        }
+
     private var _favorability by mutableStateOf(0.0)
     var favorability
         get() = _favorability
@@ -84,20 +91,24 @@ class State {
             if (feelingType == FeelingType.ILL) action = null
             action?.let { action ->
                 val delta = action.bonus.getBonusDelta(this)
-                exp += delta.earnedExp
-                money += delta.earnedMoney
-                hunger -= delta.spentHunger
-                thirst -= delta.spentThirst
-                feeling -= delta.spentFeeling
+                exp += delta.exp
+                money += delta.money
+                hunger += delta.hunger
+                thirst += delta.thirst
+                feeling += delta.feeling
+                strength += (if (hunger > 25 || strength >= hunger) delta.hunger else 0.0) +
+                        (if (thirst > 25 || strength >= thirst) delta.thirst else 0.0)
             }
 
             health += (-2.0 +
                     (if (hunger <= 25) -2.0 else if (hunger >= 75) Random.nextDouble(1.0, 3.0) else 0.0) +
-                    (if (thirst <= 25) -2.0 else if (thirst >= 75) Random.nextDouble(1.0, 4.0) else 0.0))
+                    (if (thirst <= 25) -2.0 else if (thirst >= 75) Random.nextDouble(1.0, 4.0) else 0.0)) +
+                    (if (strength <= 10) -2.0 else if (strength >= 90) Random.nextDouble(1.0, 4.0) else 0.0)
             favorability += if (feeling >= 90) 1.0 else if (feeling <= 25) -1.0 else 0.0
             exp += (if (feeling >= 75) 2.0 else if (feeling <= 25) -1.0 else 0.0) +
                     (if (thirst >= 75) Random.nextDouble(1.0, 3.0) else 0.0)
             feeling += -aloneValue
+
             println("Exp:$exp Level:$level Money:$money Hunger:$hunger Thirst:$thirst Feeling:$feeling Type:${feelingType.name} Health:$health Favorability:$favorability")
         }
     }
@@ -108,6 +119,11 @@ class State {
 
     fun startAction(newAction: Action) {
         action = newAction
+        sleeping = false
+    }
+
+    fun stopAction() {
+        action = null
         sleeping = false
     }
 

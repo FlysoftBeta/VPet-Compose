@@ -1,12 +1,11 @@
 package ui
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -27,9 +28,19 @@ import kotlin.math.roundToLong
 
 private data class StateItem(
     val text: String,
-    val current: Double,
-    val total: Double
+    val progress: StateItemProgress? = null,
+    val content: String? = null
 )
+
+private data class StateItemProgress(
+    val current: Double,
+    val total: Double,
+    val shouldBeColored: Boolean = true
+)
+
+val Green = Color(0xffaacc6c)
+val Yellow = Color(0xfffccc50)
+val Red = Color(0xffff4c4c)
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -38,11 +49,20 @@ fun StatusCard(expanded: Boolean, onDismissRequest: () -> Unit) {
     val list =
         remember(state.exp, state.expRequiredToUpgrade, state.health, state.feeling, state.hunger, state.thirst) {
             listOf(
-                StateItem("经验", state.exp, state.exp + state.expRequiredToUpgrade),
-                StateItem("体力", state.health, 100.0),
-                StateItem("心情", state.feeling, 100.0),
-                StateItem("饱食度", state.hunger, 100.0),
-                StateItem("口渴度", state.thirst, 100.0),
+                StateItem("Lv ${state.level}"),
+                StateItem("金钱", content = "$ ${state.money.roundToLong()}"),
+                StateItem(
+                    "经验",
+                    progress = StateItemProgress(
+                        state.exp,
+                        state.exp + state.expRequiredToUpgrade,
+                        shouldBeColored = false
+                    )
+                ),
+                StateItem("体力", progress = StateItemProgress(state.health, 100.0)),
+                StateItem("心情", progress = StateItemProgress(state.feeling, 100.0)),
+                StateItem("饱食度", progress = StateItemProgress(state.hunger, 100.0)),
+                StateItem("口渴度", progress = StateItemProgress(state.thirst, 100.0)),
             )
         }
 
@@ -85,29 +105,50 @@ fun StatusCard(expanded: Boolean, onDismissRequest: () -> Unit) {
                 true
             } else false
         }) {
-            Card(modifier = Modifier.fillMaxWidth().zIndex(10.0f).graphicsLayer {
+            ElevatedCard(modifier = Modifier.fillMaxWidth().zIndex(10.0f).graphicsLayer {
                 scaleX = scale
                 scaleY = scale
                 this.alpha = alpha
             }) {
-                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     list.forEach { item ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(item.text, modifier = Modifier.weight(0.2f))
-                            Column(modifier = Modifier.weight(0.7f)) {
-                                Row {
-                                    Text(
-                                        "${item.current.roundToLong()}/${item.total.roundToLong()}",
-                                        fontSize = 0.6.em,
-                                        lineHeight = 0.6.em
-                                    )
+                            Text(
+                                item.text,
+                                modifier = Modifier.weight(0.2f),
+                                fontSize = 0.8.em,
+                                lineHeight = 0.8.em
+                            )
+                            item.progress?.let { progress ->
+                                Column(
+                                    modifier = Modifier.weight(0.7f),
+                                    horizontalAlignment = Alignment.End
+                                ) {
+                                    Row {
+                                        Text(
+                                            "${progress.current.roundToLong()}/${progress.total.roundToLong()}",
+                                            fontSize = 0.6.em,
+                                            lineHeight = 0.6.em
+                                        )
+                                    }
+                                    val value = remember(progress) { (progress.current / progress.total).toFloat() }
+                                    Row {
+                                        LinearProgressIndicator(
+                                            value,
+                                            modifier = Modifier.weight(0.7f).clip(RoundedCornerShape(50)),
+                                            color = if (progress.shouldBeColored) if (value < 0.5f) Red else if (value < 0.7f) Yellow else Green else ProgressIndicatorDefaults.linearColor
+                                        )
+                                    }
                                 }
-                                Row {
-                                    LinearProgressIndicator(
-                                        (item.current / item.total).toFloat(),
-                                        modifier = Modifier.weight(0.7f)
-                                    )
-                                }
+                            } ?: item.content?.let { content ->
+                                Text(
+                                    content, modifier = Modifier.weight(0.7f),
+                                    fontSize = 0.8.em,
+                                    lineHeight = 0.8.em
+                                )
                             }
                         }
                     }

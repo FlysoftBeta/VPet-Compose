@@ -3,16 +3,16 @@ package ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.awaitApplication
 import androidx.compose.ui.window.rememberDialogState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import ui.theme.AppTheme
 import utils.resourceDirectory
@@ -29,7 +29,6 @@ fun app() = runBlocking {
                 resourceManager.loadFromDirectories(
                     listOf(resourceDirectory.resolve("default_mod"))
                 )
-                delay(1000)
                 loading = null
             }
 
@@ -43,12 +42,12 @@ fun app() = runBlocking {
             ) {
                 window.isAlwaysOnTop = true
                 AppTheme(useDarkTheme = true) {
-                    loading?.let { loading ->
-                        Surface {
-                            Box(modifier = Modifier.padding(8.dp)) { Text(loading) }
-                        }
-                    } ?: Box(modifier = Modifier.fillMaxSize()) {
-                        PetStateProvider {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        loading?.let { loading ->
+                            Card {
+                                Box(modifier = Modifier.padding(8.dp)) { Text(loading) }
+                            }
+                        } ?: PetStateProvider {
                             PetMenu { Pet() }
                         }
                     }

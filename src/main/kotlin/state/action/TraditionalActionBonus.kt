@@ -23,7 +23,7 @@ data class TraditionalActionBonus(
             earnedExp = if (isEarningExp) earning else 0.0,
             spentHunger = spentHunger,
             spentThirst = spentThirst,
-            spentFeeling = spentFeeling
+            spentFeeling = (if (type == ActionType.PLAY) -status.aloneValue else 1.0) * spentFeeling
         )
     }
 
